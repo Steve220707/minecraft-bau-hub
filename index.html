@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minecraft Bau-Hub</title>
+<style>
+:root {
+  --bg: #f4f2ee;
+  --panel: #ffffff;
+  --panel-2: #ece9e3;
+  --line: #d9d4ca;
+  --text: #1f1d1a;
+  --muted: #6b665d;
+  --accent: #3f7a2a;
+  --warn: #9a5b00;
+  --warn-bg: #fff3dc;
+  --early: #3f8a2c;  --early-ink: #ffffff;
+  --mid:   #7a7f87;  --mid-ink:   #ffffff;
+  --late:  #138a83;  --late-ink:  #ffffff;
+  --end:   #7b4fd1;  --end-ink:   #ffffff;
+  --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17181b; --panel: #202226; --panel-2: #2a2c31; --line: #34373d;
+    --text: #e9e6e0; --muted: #9b978f; --accent: #7cc35a;
+    --warn: #f0b05a; --warn-bg: #3a2c15;
+    --early: #5da83f; --early-ink: #0f1a0b;
+    --mid:   #c9ccd1; --mid-ink:   #1b1c1f;
+    --late:  #4fd8cf; --late-ink:  #062523;
+    --end:   #a985ff; --end-ink:   #1a0f33;
+    --shadow: none; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17181b; --panel: #202226; --panel-2: #2a2c31; --line: #34373d;
+  --text: #e9e6e0; --muted: #9b978f; --accent: #7cc35a;
+  --warn: #f0b05a; --warn-bg: #3a2c15;
+  --early: #5da83f; --early-ink: #0f1a0b;
+  --mid:   #c9ccd1; --mid-ink:   #1b1c1f;
+  --late:  #4fd8cf; --late-ink:  #062523;
+  --end:   #a985ff; --end-ink:   #1a0f33;
+  --shadow: none; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+a { color: var(--accent); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+
+header { padding: 28px 0 14px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 36px; height: 36px; flex: none; image-rendering: pixelated;
+  background:
+    linear-gradient(var(--early) 0 0) 0 0/100% 34% no-repeat,
+    linear-gradient(#7a5533 0 0) 0 100%/100% 66% no-repeat;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,.18);
+}
+h1 { font-size: 26px; margin: 0; letter-spacing: -.01em; }
+.sub { color: var(--muted); margin: 4px 0 0; font-size: 14px; }
+
+.tools {
+  position: sticky; top: 0; z-index: 5;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
+}
+.tools .wrap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.search {
+  flex: 1 1 240px; min-width: 0;
+  padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--panel); color: var(--text); font: inherit;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border: 1px solid var(--line); background: var(--panel); color: var(--text);
+  padding: 6px 10px; border-radius: 999px; font: inherit; font-size: 13px; cursor: pointer;
+}
+.chip[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.chip.t[aria-pressed="true"][data-tier="early"] { background: var(--early); color: var(--early-ink); border-color: var(--early); }
+.chip.t[aria-pressed="true"][data-tier="mid"]   { background: var(--mid);   color: var(--mid-ink);   border-color: var(--mid); }
+.chip.t[aria-pressed="true"][data-tier="late"]  { background: var(--late);  color: var(--late-ink);  border-color: var(--late); }
+.chip.t[aria-pressed="true"][data-tier="end"]   { background: var(--end);   color: var(--end-ink);   border-color: var(--end); }
+select.chip { appearance: none; padding-right: 26px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 14px) 52%, calc(100% - 9px) 52%; background-size: 5px 5px; background-repeat: no-repeat; }
+.ghost { background: transparent; }
+.count { color: var(--muted); font-size: 13px; margin-left: auto; }
+
+main { padding: 18px 0 40px; }
+.group h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 26px 0 10px; }
+.mat {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  margin-bottom: 10px; box-shadow: var(--shadow); overflow: hidden;
+}
+.mat > summary {
+  list-style: none; cursor: pointer; padding: 13px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.mat > summary::-webkit-details-marker { display: none; }
+.mat > summary::before {
+  content: ""; width: 8px; height: 8px; flex: none;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg); transition: transform .15s;
+}
+.mat[open] > summary::before { transform: rotate(45deg); }
+.mname { font-weight: 600; font-size: 16px; }
+.dots { display: flex; gap: 4px; margin-left: auto; }
+.dot { width: 22px; height: 6px; border-radius: 2px; background: var(--panel-2); }
+.dot.on.early { background: var(--early); } .dot.on.mid { background: var(--mid); }
+.dot.on.late { background: var(--late); }   .dot.on.end { background: var(--end); }
+.built-n { font-size: 12px; color: var(--muted); min-width: 58px; text-align: right; }
+
+.rows { border-top: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: 92px 1fr; gap: 14px; padding: 14px 16px; border-top: 1px solid var(--line); }
+.row:first-child { border-top: 0; }
+.tier {
+  align-self: start; text-align: center; font-size: 12px; font-weight: 700;
+  padding: 4px 6px; border-radius: 6px; letter-spacing: .02em;
+}
+.tier.early { background: var(--early); color: var(--early-ink); }
+.tier.mid   { background: var(--mid);   color: var(--mid-ink); }
+.tier.late  { background: var(--late);  color: var(--late-ink); }
+.tier.end   { background: var(--end);   color: var(--end-ink); }
+.vid { display: grid; grid-template-columns: 240px 1fr; gap: 14px; align-items: start; }
+.vid + .vid { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.thumb {
+  position: relative; display: block; width: 100%; aspect-ratio: 16/9; border-radius: 8px; overflow: hidden;
+  background: var(--panel-2); border: 0; padding: 0; cursor: pointer;
+}
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb .play {
+  position: absolute; inset: 0; margin: auto; width: 46px; height: 32px; border-radius: 8px;
+  background: rgba(0,0,0,.72);
+}
+.thumb .play::after {
+  content: ""; position: absolute; left: 19px; top: 9px;
+  border-left: 12px solid #fff; border-top: 7px solid transparent; border-bottom: 7px solid transparent;
+}
+.thumb .len {
+  position: absolute; right: 6px; bottom: 6px; background: rgba(0,0,0,.78); color: #fff;
+  font-size: 12px; padding: 1px 5px; border-radius: 4px;
+}
+.thumb iframe { width: 100%; height: 100%; border: 0; display: block; }
+.vtitle { font-weight: 600; margin: 0 0 2px; line-height: 1.35; }
+.vtitle a { color: var(--text); text-decoration: none; }
+.vtitle a:hover { text-decoration: underline; }
+.meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.tag { border: 1px solid var(--line); border-radius: 5px; padding: 0 6px; font-size: 12px; color: var(--text); }
+.rate { color: var(--text); }
+.note { font-size: 14px; margin: 6px 0 0; }
+.done { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; margin-top: 8px; cursor: pointer; user-select: none; }
+.done input { width: 16px; height: 16px; accent-color: var(--accent); }
+.vid.is-built .vtitle { text-decoration: line-through; text-decoration-color: var(--muted); }
+.empty { color: var(--muted); font-size: 14px; align-self: center; }
+.none { text-align: center; color: var(--muted); padding: 40px 0; }
+footer { color: var(--muted); font-size: 13px; padding: 10px 0 40px; border-top: 1px solid var(--line); }
+
+@media (max-width: 720px) {
+  .tools { position: static; }
+  .row { grid-template-columns: 1fr; gap: 8px; }
+  .tier { justify-self: start; }
+  .vid { grid-template-columns: 1fr; }
+  .dots { display: none; }
+  .count { width: 100%; margin-left: 0; }
+}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <div class="brand">
+    <div class="logo" aria-hidden="true"></div>
+    <div>
+      <h1>Minecraft Bau-Hub</h1>
+      <p class="sub" id="sub"></p>
+    </div>
+  </div>
+</header>
+
+<div class="tools">
+  <div class="wrap">
+    <input class="search" id="q" type="search" placeholder="Material, Kanal oder Stichwort suchen …" autocomplete="off">
+    <div class="chips" id="groups"></div>
+    <div class="chips" id="tiers"></div>
+    <select class="chip" id="ver" aria-label="Version">
+      <option value="">Alle Versionen</option>
+    </select>
+    <button class="chip ghost" id="hideBuilt" aria-pressed="false">Gebautes ausblenden</button>
+    <button class="chip ghost" id="toggleAll">Alle aufklappen</button>
+    <button class="chip ghost" id="theme" title="Hell/Dunkel">◐</button>
+    <span class="count" id="count"></span>
+  </div>
+</div>
+
+<main class="wrap" id="list"></main>
+
+<footer class="wrap">
+  <p>Versionen und Raten sind Angaben der Video-Ersteller, nicht selbst getestet. ⚠ markiert Dinge, die man vor dem Bau wissen sollte.
+  Der Haken „gebaut“ wird nur in diesem Browser gespeichert.
+  <span id="localhint"></span></p>
+</footer>
+
+<script>
+const DATA = {"stand":"2026-10-18","zielversion":"26.3","gruppen":[{"name":"Rohstoffe & Blöcke","eintraege":[{"material":"Eisen","such":[],"stufen":{"early":[{"id":"-oYyJ6jfSPU","titel":"Minecraft Elegance: Iron Farm on Day 1 of Survival","kanal":"ianxofour","datum":"2020-12","dauer":"28:49","versionen":"Java 1.16+","rate":"","notiz":"Am ersten Tag baubar: kein Eisen, keine Lava, kein Namensschild nötig, rund 30 einfache Blöcke.","v":["1.16",null]}],"mid":[{"id":"S_WYtYZZEZQ","titel":"Most Efficient High Capacity Iron Farm - Build Tutorial","kanal":"Nico is LOST","datum":"2022-10","dauer":"15:25","versionen":"Java 1.18–1.19+","rate":"~4.900/h (3 Ebenen, ab 1.19), erweiterbar","notiz":"99 % Effizienz pro Villager-Kammer, beliebig erweiterbar. Getöntes Glas über den Zombies ist Pflicht.","v":["1.18",null]}],"late":[{"id":"835S_L50Xek","titel":"Minecraft 1.21 Ultimate Iron Farm Tutorial - 83,000 Iron Per Hour!","kanal":"Shulkercraft","datum":"2022-10","dauer":"24:59","versionen":"1.21+","rate":"2.700/h pro Modul, bis ~100.000/h mit 36 Modulen","notiz":"Modular – klein anfangen, später ausbauen. Design: Aurigas.","v":["1.21",null]}],"end":[]}},{"material":"Gold","such":[],"stufen":{"early":[],"mid":[{"id":"uh3X0Pmr9yc","titel":"Minecraft Portal Based Gold Farm - 50,000 Items Per Hour!","kanal":"Shulkercraft","datum":"2020-10","dauer":"16:29","versionen":"gebaut in 1.16","rate":"~310 Goldblöcke/h (50.000 Items/h)","notiz":"Portal-Farm ohne XP, braucht ~14.000 Magmablöcke. ⚠ Shulkercrafts eigene Übersicht für 1.21.10 führt sie nicht mehr; dort steht als einfache Portal-Farm ianxofours Design (360 Blöcke/h, mit XP): https://youtu.be/uBpMwXVn6iY","v":["1.16","1.16"]}],"late":[{"id":"wLLTKyptV0k","titel":"Minecraft 1.21 Cheap + Powerful Gold Farm (JAVA 1.21+)","kanal":"potato_noir","datum":"2024-07","dauer":"62:18","versionen":"Java 1.21 bis 1.21.11+ (World-Download aktualisiert)","rate":"","notiz":"Günstig und stark, lässt sich um ihre Bartering-Farm erweitern. Alternative mit 1.650 Goldblöcken/h (Boat Looting, ab 1.18): DashPum4 – https://youtu.be/9eTntqakk48","v":["1.21",null]}],"end":[]}},{"material":"Kupfer, Dreizack & Nautilus (Drowned)","such":[],"stufen":{"early":[],"mid":[{"id":"W_fl18Rkc18","titel":"BEST MINECRAFT 26.2+ DROWNED TRIDENT FARM!","kanal":"wattles","datum":"2026-05","dauer":"17:34","versionen":"26.1+ (Java, Bedrock evtl.)","rate":"","notiz":"Eigenes Design für 26.1: Dreizacke, Kupfer, Nautilusschalen, XP.","v":["26.1",null]}],"late":[],"end":[{"id":"50tigSzs30Q","titel":"6k/h copper farm! Git Gud in Technical Minecraft, ep21","kanal":"FrunoCraft","datum":"2026-05","dauer":"32:06","versionen":"getestet 1.21.11 und 26.1.2","rate":"~6.000 Kupfer/h","notiz":"2-Spieler-Farm aus seiner Perimeter-Serie, Dreizacke fallen mit an.","v":["1.21.11","26.1.2"]}]}},{"material":"Cobblestone & Stein","such":[],"stufen":{"early":[{"id":"Ed1uYjti-Ow","titel":"Minecraft AFK Stone Generator - 9,800 per Hour!","kanal":"mysticat","datum":"2021-04","dauer":"1:32","versionen":"1.16+ (Java & Bedrock)","rate":"9.800/h (AFK)","notiz":"Ohne Redstone, braucht einen Eimer Lava.","v":["1.16",null]}],"mid":[{"id":"Un-opjPr9LU","titel":"Minecraft 1.21+ Easy Cobblestone Farm Tutorial - Fully Automatic","kanal":"Shulkercraft","datum":"2022-11","dauer":"11:33","versionen":"1.21+","rate":"75.000/h","notiz":"Vollautomatisch mit TNT-Duper. Design: Marten da Mink.","v":["1.21",null]}],"late":[{"id":"4KGkH-jqZoY","titel":"Minecraft INSANE Cobblestone Farm Tutorial - 207,000 Per Hour","kanal":"Shulkercraft","datum":"2025-04","dauer":"17:18","versionen":"1.21.5+","rate":"207.000/h","notiz":"Rund eine Stunde Bauzeit. Design: NachoCS & Sam. Rate bestätigt in Shulkercrafts Vergleich für 1.21+/26.1 (https://youtu.be/_5kQSeqANKs). Noch schneller, aber nur als Showcase mit World-Download: TomB, 515.000/h – https://youtu.be/NJt2XS3rUx4","v":["1.21.5",null]}],"end":[]}},{"material":"Holz","such":["Kirsche","Kirschbaum","Blasse Eiche","Pale Oak","Dunkle Eiche","Mangrove","Azalee","Poplar","Pappel","Stämme","Logs"],"stufen":{"early":[{"id":"NprrOyXdP5s","titel":"Easiest All Types Tree Farm Minecraft Java 26.3 (1.21+) | 20,000–25,000 Logs/Hour!","kanal":"Adil Gamez","datum":"2026-01","dauer":"9:57","versionen":"26.1+ (Java)","rate":"20.000–25.000 Stämme/h","notiz":"Alle Holzarten, kompakt, AFK-fähig, Schematic und World-Download.","v":["26.1",null]}],"mid":[{"id":"NTm4qpVwFN0","titel":"BEST Automatic Tree Farm! (15 trees/fungus in 1 simple redstone machine) AFK Wood UTF","kanal":"Rays Works","datum":"2026-07","dauer":"36:14","versionen":"1.21.9–26.3+","rate":"","notiz":"15 Baum-/Pilzarten inklusive Poplar (neu in 26.3), läuft ohne Spieler. ⚠ Bei 11:06 sind es 5 Gerüste, nicht 12.","v":["1.21.9",null]}],"late":[{"id":"haF4ZCyxnX4","titel":"Minecraft BEST Tree Farm +1.21 (170,000 logs/h) Fully AFK","kanal":"Bud","datum":"2025-09","dauer":"66:22","versionen":"1.16–1.21+ (nur Java)","rate":"170.000 Stämme/h","notiz":"Nur Fichte (2×2), dafür riesige Raten. Richtungsabhängig – Schematic nicht drehen. Design: Twiti888.","v":["1.16",null]}],"end":[]}},{"material":"Sand & Kies","such":[],"stufen":{"early":[],"mid":[{"id":"y8HEIgiDv_c","titel":"NEW & FIXED Sand Duper | UNLIMITED Sand & Gravel | Minecraft Java 26.2+","kanal":"SpawnCamped","datum":"2026-09","dauer":"18:03","versionen":"26.2+","rate":"37.000/h (eine Seite), bis 100k+ mit vier Seiten","notiz":"Duplikations-Glitch am End-Portal, auch für Betonpulver. Inklusive Chunk-Loader und Lager.","v":["26.2",null]}],"late":[{"id":"epWigQigG0M","titel":"Minecraft Elegance: Instant Concrete Factory (Sand, Gravel, Flint, Java 1.21+, 28.8k/hr)","kanal":"ianxofour","datum":"2024-08","dauer":"15:50","versionen":"Java 1.21+","rate":"28.800/h","notiz":"Dupliziert Betonpulver und macht direkt fertigen Beton daraus; mit Kies fällt Feuerstein an.","v":["1.21",null]}],"end":[]}},{"material":"Ton","such":[],"stufen":{"early":[{"id":"LEjX_kEhWEE","titel":"Simple Mud Farming Setup","kanal":"ilmango","datum":"2022-03","dauer":"8:06","versionen":"1.19+","rate":"9.000 Schlamm/h","notiz":"Macht aus Erde Schlamm – Schlamm über Tropfstein wird zu Ton. Showcase mit World-Download, kein Block-für-Block-Tutorial.","v":["1.19",null]}],"mid":[{"id":"5qG2pDRArBo","titel":"Minecraft 1.21+ DIRT To CLAY Converter - 13,000 Clay Balls Per Hour","kanal":"Shulkercraft","datum":"2023-01","dauer":"34:31","versionen":"1.21+","rate":"13.000 Tonklumpen/h","notiz":"Vollautomatisch von Erde zu Ton. Design: Stromne.","v":["1.21",null]}],"late":[],"end":[]}},{"material":"Erde","such":[],"stufen":{"early":[],"mid":[{"id":"wJ2CrAutYfM","titel":"Rooted Dirt Farm | Block-by-Block Tutorial | 3000/hr AFK-able","kanal":"Bitter Lemonade - Redstone","datum":"2026-08","dauer":"62:02","versionen":"1.17–26.2+","rate":"3.000/h","notiz":"Klein und AFK-fähig, braucht einen Spieler in der Nähe.","v":["1.17",null]}],"late":[{"id":"YkcGbCGz4JM","titel":"Let's Build a High Efficiency Dirt Farm","kanal":"cubicmetre","datum":"2022-12","dauer":"32:19","versionen":"1.19+","rate":"","notiz":"Technisch anspruchsvoll, mit World-Download.","v":["1.19",null]}],"end":[]}},{"material":"Basalt","such":[],"stufen":{"early":[],"mid":[{"id":"iwpCI8lMkJ0","titel":"Automatic Basalt Farm for Minecraft 1.21","kanal":"The Master Miner","datum":"2023-10","dauer":"2:17","versionen":"1.20+ (Java & Bedrock)","rate":"","notiz":"Kleiner, simpler Generator.","v":["1.20",null]}],"late":[{"id":"bKWZwzl_bJs","titel":"Simple, Fast, Auto Basalt Farm | 86,400/hour","kanal":"bigbooty17","datum":"2024-03","dauer":"17:20","versionen":"1.20+ / 1.21","rate":"86.400/h","notiz":"Mit TNT-Duper und Shulkerbox-Loader.","v":["1.20",null]}],"end":[]}},{"material":"Eis","such":[],"stufen":{"early":[{"id":"7-Pd_FSvZEU","titel":"Minecraft Easy Ice Farming Method - 4000+ Per Hour","kanal":"Shulkercraft","datum":"2020-09","dauer":"3:49","versionen":"1.16+, läuft auch 1.20+","rate":"4.000/h","notiz":"Einfache Methode für den Anfang.","v":["1.16",null]}],"mid":[{"id":"9xQ8suEuvoE","titel":"Shattering Ice Farm Rates with Coding: SPUD ICE (Java 1.19+)","kanal":"potato_noir","datum":"2023-12","dauer":"51:56","versionen":"Java 1.19+","rate":"","notiz":"Weiterentwicklung von gnembons Eisfarm, modular – skaliert bis ins Late Game.","v":["1.19",null]}],"late":[],"end":[]}},{"material":"Schnee","such":[],"stufen":{"early":[{"id":"GKHg_NVia4A","titel":"Minecraft Super Easy Snow Farm - 72,000 Per Hour!","kanal":"Shulkercraft","datum":"2020-11","dauer":"4:35","versionen":"1.20+","rate":"72.000 Schneeschichten/-bälle pro h","notiz":"Schneegolem-Farm. Design: EagleEye621.","v":["1.20",null]}],"mid":[{"id":"yNjwnJAzpEY","titel":"Minecraft Playerless Snow Block Farm! (snowball farm Auto Crafter)","kanal":"Rays Works","datum":"2024-05","dauer":"11:16","versionen":"1.14–26.3+ (Crafter ab 1.21)","rate":"24.000 Schneebälle/h","notiz":"Läuft ohne Spieler, Crafter macht direkt Schneeblöcke.","v":["1.14",null]}],"late":[{"id":"-3-IixkAuS8","titel":"Minecraft Snow Farm You'll Actually Use","kanal":"bigbooty17","datum":"2025-08","dauer":"11:41","versionen":"1.21+","rate":"","notiz":"Liefert Schneeblöcke mit erweiterbarem Lager. Nicht in warmen Biomen bauen (Golems sterben).","v":["1.21",null]}],"end":[]}},{"material":"Lava","such":[],"stufen":{"early":[{"id":"1vFwUc-PD5I","titel":"Minecraft 1.21 Simple Lava Farm","kanal":"The Master Miner","datum":"2023-07","dauer":"1:12","versionen":"1.20+ (Java & Bedrock)","rate":"","notiz":"Tropfstein über Kessel – minimaler Aufwand.","v":["1.20",null]}],"mid":[{"id":"SnDul0WMdH4","titel":"Automatic Lava Farm 1.17","kanal":"ilmango","datum":"2021-07","dauer":"8:42","versionen":"1.17+","rate":"","notiz":"Für Super-Schmelzen und Obsidianfarmen. Showcase mit World-Download.","v":["1.17",null]}],"late":[],"end":[{"id":"ZjmSqTWU994","titel":"12,000 Lava Buckets / Obsidian Per Hour Farm","kanal":"ilmango","datum":"2023-03","dauer":"8:15","versionen":"1.19+","rate":"12.000 Eimer bzw. Obsidian/h","notiz":"Großanlage für einen stationären AFK-Spieler. Showcase mit World-Download.","v":["1.19",null]}]}},{"material":"Obsidian","such":[],"stufen":{"early":[],"mid":[{"id":"i6SSdgKmgew","titel":"BEST 1.21 Obsidian Farm Minecraft Tutorial - NEW - 63,000/HR!","kanal":"TheySix","datum":"2024-07","dauer":"20:09","versionen":"Java 1.21","rate":"63.000/h","notiz":"Nutzt die Portal-Mechanik von 1.21. World-Download über Discord.","v":["1.21","1.21"]}],"late":[{"id":"kXczRmrG-nM","titel":"210K/Hour Nether Portal Obsidian Farm","kanal":"WMC","datum":"2025-03","dauer":"2:22","versionen":"1.21+","rate":"210.000/h","notiz":"Wither-basiert über Netherportale. Kurzer Showcase, Bauinfos und World-Download/Litematica in der Beschreibung.","v":["1.21",null]}],"end":[]}},{"material":"Moos","such":[],"stufen":{"early":[{"id":"dxO-zbi1k8s","titel":"The EASIEST Moss Farm in Minecraft Java 1.21+ (Tutorial)","kanal":"UForced","datum":"2025-03","dauer":"5:50","versionen":"Java 1.21","rate":"10.000+/h","notiz":"","v":["1.21","1.21"]}],"mid":[{"id":"nE9zYCHVcpI","titel":"Minecraft Moss Farm 1.21.11 | 21,000 Per Hour!","kanal":"BasicRedstone","datum":"2026-01","dauer":"11:16","versionen":"1.21.11","rate":"21.000/h","notiz":"15.300 Moosblöcke, 3.200 Teppiche, Azaleen nebenbei.","v":["1.21.11","1.21.11"]}],"late":[],"end":[]}}]},{"name":"Pflanzen & Nahrung","eintraege":[{"material":"Bambus","such":[],"stufen":{"early":[{"id":"oT9jeK7ypjI","titel":"A BETTER Bamboo Farm | Minecraft 1.21 Tutorial","kanal":"xisumavoid","datum":"2025-09","dauer":"3:32","versionen":"1.21+","rate":"","notiz":"Kurzes, besseres Standard-Design.","v":["1.21",null]}],"mid":[{"id":"HEItI7AZQ0s","titel":"Bamboo Farm - 10,000+ Per Hour - Minecraft 1.21+ Tutorial","kanal":"Kmond","datum":"2023-05","dauer":"12:05","versionen":"1.19+ (Java)","rate":"10.000+/h","notiz":"Mit Flugmaschine.","v":["1.19",null]}],"late":[{"id":"obIh9T-n_Xg","titel":"We Built The MOST Overpowered Bamboo Farm in Minecraft","kanal":"Shulkercraft","datum":"2023-07","dauer":"11:24","versionen":"1.20+","rate":"~2 Mio/h","notiz":"Riesiger Bambus-Turm im Dschungel – eher Projekt als Tutorial, mit World-Download. Design: toasted_sausage.","v":["1.20",null]}],"end":[]}},{"material":"Zuckerrohr","such":[],"stufen":{"early":[{"id":"CL_Ue8F2Bw0","titel":"Minecraft Sugar Cane Farm - 1300 Per Hour - 1.20+","kanal":"Shulkercraft","datum":"2020-07","dauer":"10:11","versionen":"1.20+","rate":"1.300/h","notiz":"","v":["1.20",null]}],"mid":[],"late":[{"id":"-mzdU-mk7JA","titel":"Mega Base Friendly Sugar Cane Farm 1.19","kanal":"ilmango","datum":"2022-05","dauer":"9:17","versionen":"1.19+","rate":"","notiz":"Billig und lag-arm, für große Basen. Showcase mit World-Download.","v":["1.19",null]}],"end":[]}},{"material":"Kelp (Brennstoff)","such":[],"stufen":{"early":[{"id":"UDZNyAsYXpQ","titel":"The BEST KELP Farm in Minecraft 26.3+ (Tutorial)","kanal":"Triloms","datum":"2025-08","dauer":"2:21","versionen":"26.3+","rate":"","notiz":"Einfach und beliebig erweiterbar.","v":["26.3",null]}],"mid":[{"id":"LvC16J23DTo","titel":"Auto Crafter for Fast and Easy Kelp Farm (best fuel)","kanal":"Rays Works","datum":"2024-02","dauer":"21:54","versionen":"1.13–26.3+","rate":"","notiz":"Crafter macht direkt getrocknete Kelpblöcke. Seit 1.21.5 wächst Kelp in jedem geladenen Chunk.","v":["1.13",null]}],"late":[{"id":"PRW3YBYvCBs","titel":"Minecraft 1.21 | Dried Kelp Block Crafter | Tile-able Refueling XP & Fuel Farm","kanal":"xisumavoid","datum":"2023-11","dauer":"7:07","versionen":"1.21+","rate":"","notiz":"Reihbar, betankt sich selbst und gibt nebenbei XP. Design: Cubehamster.","v":["1.21",null]}],"end":[]}},{"material":"Kaktus","such":[],"stufen":{"early":[{"id":"g38FJFtZ-B4","titel":"The EASIEST Cactus Farm in Minecraft 26.3+ (Tutorial)","kanal":"Triloms","datum":"2023-07","dauer":"1:45","versionen":"laut Titel 26.3+","rate":"","notiz":"⚠ Seit 1.21.5 können Kaktusblüten oben wachsen – unklar, ob das dieses Design bremst.","v":["26.3",null]}],"mid":[{"id":"8mQgZnSQpRE","titel":"Minecraft 1.21+ Cactus Farm - 1000+ Per Hour","kanal":"Shulkercraft","datum":"2020-08","dauer":"8:47","versionen":"1.16+, laut Titel 1.21+","rate":"1.000+/h","notiz":"Inspiriert von ilmango. ⚠ Kaktusblüten (1.21.5) wie oben.","v":["1.16",null]}],"late":[],"end":[]}},{"material":"Melone & Kürbis","such":[],"stufen":{"early":[{"id":"epSlUaPdEWY","titel":"EASY Automatic Melon + Pumpkin Farm in Minecraft 26.3+ (Tutorial)","kanal":"Triloms","datum":"2023-11","dauer":"3:38","versionen":"laut Titel 26.3+ (Java)","rate":"","notiz":"","v":["26.3",null]}],"mid":[{"id":"vetJOwcNOnw","titel":"Minecraft Automatic Melon/Pumpkin Farm - 6500+ Per Hour","kanal":"Shulkercraft","datum":"2024-09","dauer":"12:26","versionen":"1.21+","rate":"6.500/h, erweiterbar auf 30.000/h","notiz":"Design: Fluffy Socks.","v":["1.21",null]}],"late":[],"end":[]}},{"material":"Weizen, Karotten, Kartoffeln","such":["Feldfrüchte","Crops","Rote Bete"],"stufen":{"early":[{"id":"Jx7bDuEznnU","titel":"Minecraft Easy Multi Crop Farm - 850 Per Hour","kanal":"Shulkercraft","datum":"2024-02","dauer":"8:02","versionen":"1.20+","rate":"850/h","notiz":"Villager ernten und pflanzen. Für Weizen ist ein eigenes Video in der Beschreibung verlinkt.","v":["1.20",null]}],"mid":[{"id":"kZaJYoP3A1o","titel":"The Easiest Fully Automatic Minecraft Villager Crop Farm 1.16+","kanal":"mysticat","datum":"2020-07","dauer":"5:23","versionen":"1.16+","rate":"","notiz":"Vollautomatisch, gut als Futterquelle für den Villager-Brüter.","v":["1.16",null]}],"late":[],"end":[]}},{"material":"Knochenmehl","such":[],"stufen":{"early":[{"id":"_1y8kQ7Jvbk","titel":"Minecraft Mob Spawner XP Farm - Easy Design - 2500+ Drops Per Hour","kanal":"Shulkercraft","datum":"2020-09","dauer":"6:45","versionen":"1.16+","rate":"2.500+ Drops/h","notiz":"Skelett-Spawner in der Oberwelt: Knochen → Knochenmehl, dazu XP. Auswahl nach Shulkercrafts Vergleich der Knochenmehlfarmen (https://youtu.be/6CIfkkqzJcs).","v":["1.16",null]}],"mid":[{"id":"eNYZiuVNBe0","titel":"Minecraft Simple Moss Bonemeal Farm (Chromoss) | Java, 1.17 - 1.21+","kanal":"The Archivists","datum":"2023-05","dauer":"9:57","versionen":"1.17–1.21+","rate":"","notiz":"Moos-basiert, nur Oberwelt, lag-arm, in jede Richtung reihbar. Design: Monica. Im Vergleichsvideo als „Chromoss“.","v":["1.17",null]}],"late":[{"id":"-SIWj_Tc2oA","titel":"Wither Skeleton Farm 400 Skulls per Hour for Minecraft 1.21+, 26.1-26.3","kanal":"Fortun8diamond","datum":"2023-05","dauer":"34:42","versionen":"1.16–26.3","rate":"","notiz":"Wither-Skelett-Farm im Nether – im Vergleichsvideo die Variante mit mehr Knochenmehl, als man je braucht.","v":["1.16","26.3"]}],"end":[]}},{"material":"Feldfrüchte & Netherwarzen (Guide)","such":["Netherwarzen","Nether Wart","Weizen","Karotten","Kartoffeln","Rote Bete","Feldfrüchte","Crops"],"stufen":{"early":[{"id":"rmSiNMkjr5I","titel":"Auto Crop Farm Minecraft - (Carrot, Potato, Wheat) Super Fast 1.21","kanal":"GrindCraftLab","datum":"2025-11","dauer":"3:06","versionen":"1.21+","rate":"","notiz":"Als Prinzip gedacht, nicht als feste Farm: Feld anlegen, per Knopf mit Wasser abernten. Funktioniert genauso für Netherwarzen (auf Seelensand) und jede andere Feldfrucht.","v":["1.21",null]}],"mid":[],"late":[],"end":[]}},{"material":"Honig","such":[],"stufen":{"early":[{"id":"T_9x7uvgqM4","titel":"The EASIEST Automatic Bee Farm in Minecraft 26.3+ (Tutorial)","kanal":"Triloms","datum":"2025-09","dauer":"2:13","versionen":"26.3+","rate":"","notiz":"Im Nether oder End gebaut arbeiten die Bienen rund um die Uhr.","v":["26.3",null]}],"mid":[],"late":[],"end":[]}},{"material":"Rind & Leder","such":[],"stufen":{"early":[{"id":"KAY6NRibjO0","titel":"Minecraft: Best Cow Farm Tutorial 1.21+ (Java & Bedrock)","kanal":"Nanaroid","datum":"2025-10","dauer":"17:13","versionen":"1.21+ (Java & Bedrock)","rate":"","notiz":"Halbautomatisch und hübsch, verlustfrei. Ohne Kocher – von den Babygrößen in 26.1 nicht betroffen.","v":["1.21",null]}],"mid":[],"late":[],"end":[]}},{"material":"Huhn, Federn & Eier","such":[],"stufen":{"early":[{"id":"BJSSj8qnPIA","titel":"Minecraft EASY Automatic Chicken Farm [1.21 & 26.1 & 26.2 & 26.3]","kanal":"Leiger","datum":"2026-03","dauer":"9:14","versionen":"1.21, 26.1–26.3","rate":"","notiz":"Erklärt, warum alte Hühnerkocher seit 26.1 kaputt sind. Variante eines Designs von Madzify.","v":["1.21","26.3"]}],"mid":[],"late":[],"end":[]}},{"material":"Wolle","such":[],"stufen":{"early":[{"id":"_qjxOpel4s8","titel":"The EASIEST Wool Farm in Minecraft 26.3+ (Tutorial)","kanal":"Triloms","datum":"2023-09","dauer":"0:56","versionen":"laut Titel 26.3+","rate":"","notiz":"Unter einer Minute, minimaler Aufwand.","v":["26.3",null]}],"mid":[{"id":"egYPZJNxSSY","titel":"NEW BEST & EASIEST WOOL FARM FOR MINECRAFT 26.3+ IS HERE!","kanal":"wattles","datum":"2026-09","dauer":"9:41","versionen":"26.3 (Java), 26.50 (Bedrock)","rate":"","notiz":"Kompakt, vollautomatisch, mit Sortierung ohne Hopper-Wüste.","v":["26.3","26.3"]}],"late":[{"id":"OgQam4zvCi4","titel":"It's now worth building Auto Wool Sheep Farms! 1.7-26.3+","kanal":"Rays Works","datum":"2025-05","dauer":"11:29","versionen":"1.7–26.3+","rate":"","notiz":"Alle Farben, läuft ohne Spieler. Seit 1.21.9 wächst Wolle doppelt so schnell nach.","v":["1.7",null]}],"end":[]}},{"material":"Fisch & Angelschätze","such":[],"stufen":{"early":[{"id":"sT4noYO1xUE","titel":"Easy AFK Fish Farm with Treasure Loot! 1.20-26.3+","kanal":"Rays Works","datum":"2023-05","dauer":"14:41","versionen":"1.20–26.3+","rate":"","notiz":"AFK-Angelfarm mit Schätzen (Verzauberte Bücher, Nautilusschalen). ⚠ War in 26.1.0–26.1.2 kaputt, seit 26.2 wieder ok. Boot-Höhe exakt nachbauen.","v":["1.20",null]}],"mid":[{"id":"w-G-z4XP_aU","titel":"Minecraft AFK Fish Farm - 6600 Items Per Hour","kanal":"Shulkercraft","datum":"2024-01","dauer":"10:20","versionen":"Java 1.18+","rate":"6.600/h","notiz":"Fisch-Mobfarm im Ozean – liefert Fisch und Knochenmehl, keine Schätze. Design: Nathan_hl / The Archivists.","v":["1.18",null]}],"late":[],"end":[]}},{"material":"Pilze (rot & braun)","such":[],"stufen":{"early":[{"id":"Qf80NoOpDus","titel":"The BEST Red & Brown Mushroom Farm in Minecraft Java 1.21 (Tutorial)","kanal":"UForced","datum":"2023-10","dauer":"4:52","versionen":"Java 1.21","rate":"","notiz":"Verlustfrei, reihbar, schnell gebaut.","v":["1.21","1.21"]}],"mid":[{"id":"POickcAagDI","titel":"BEST Automatic MUSHROOM FARM (Brown & Red) | Minecraft Java 26.3+","kanal":"SpawnCamped","datum":"2026-09","dauer":"11:22","versionen":"26.3+","rate":"","notiz":"Stapelbar – mit 8–10 Ebenen lohnt sie sich.","v":["26.3",null]}],"late":[{"id":"hwjnrNMsOBU","titel":"Automatic Brown Mushroom Farm","kanal":"ilmango","datum":"2022-07","dauer":"10:04","versionen":"1.13+","rate":"","notiz":"Geht auch mit roten Pilzen. Showcase mit World-Download.","v":["1.13",null]}],"end":[]}},{"material":"Shelf Mushroom (26.3)","such":["Pilz","Mushroom","Wilderness Bound"],"stufen":{"early":[{"id":"m5wmrRvXQS0","titel":"The BEST Shelf Mushroom Farm in Minecraft","kanal":"OddManMC","datum":"2026-07","dauer":"2:59","versionen":"26.3+ (Block neu in 26.3)","rate":"","notiz":"","v":["26.3",null]}],"mid":[],"late":[],"end":[]}},{"material":"Netherpilze, Nylium & Shroomlight","such":["Warzenblock","Wart Block","Karmesin","Wirr","Fungus","Nether-Pflanzen"],"stufen":{"early":[{"id":"VyMWhw1LlGw","titel":"Minecraft Easy & Fast Fungus Farm Tutorial | 1 Minute Build | by Helm & ncolyer","kanal":"The Archivists","datum":"2023-07","dauer":"2:14","versionen":"1.16–1.21+","rate":"","notiz":"Halbautomatisch, Reste lassen sich zu Knochenmehl kompostieren.","v":["1.16",null]}],"mid":[],"late":[],"end":[]}},{"material":"Süßbeeren","such":[],"stufen":{"early":[{"id":"j7gYn7OtIcc","titel":"The BEST Sweet Berry Farm in Minecraft 26.3+ (Tutorial)","kanal":"Triloms","datum":"2023-09","dauer":"1:35","versionen":"laut Titel 26.3+","rate":"","notiz":"","v":["26.3",null]}],"mid":[],"late":[],"end":[]}},{"material":"Leuchtbeeren","such":["Glow Berries","Licht"],"stufen":{"early":[{"id":"NmboIva-i8Y","titel":"EASY Automatic Glow Berry Farm in Minecraft 26.3+ (Tutorial)","kanal":"Triloms","datum":"2023-10","dauer":"0:33","versionen":"laut Titel 26.3+","rate":"","notiz":"","v":["26.3",null]}],"mid":[],"late":[],"end":[]}},{"material":"Höhlenpflanzen (Tropfblatt, Flechte, Azalee, Wurzelerde …)","such":["Tropfblatt","Dripleaf","Flechte","Glow Lichen","Hängewurzeln","Sporenblüte","Wurzelerde","Azalee","Tropfstein","Dripstone"],"stufen":{"early":[],"mid":[{"id":"DRWUJOYUrqY","titel":"18 Auto Minecraft Farms (hanging, dripleaf, lichen, moss, azalea, berry, rooted, amethyst) 1.17-26.3+","kanal":"Rays Works","datum":"2021-06","dauer":"27:22","versionen":"1.17–26.3+","rate":"","notiz":"18 kleine Farmen in einem Video. Seit 1.21.5 wachsen Pflanzen, Tropfstein und Amethyst in jedem geladenen Chunk. Neueste Fassungen in Rays' Farm-Everything-Dokument: http://bit.ly/FarmEverything","v":["1.17",null]}],"late":[],"end":[]}},{"material":"Amethyst","such":[],"stufen":{"early":[],"mid":[{"id":"Oy9zZ5LbeHs","titel":"Easy Efficient Minecraft 1.21 AMETHYST FARM!","kanal":"wattles","datum":"2023-11","dauer":"31:19","versionen":"1.20+ (Java & Bedrock)","rate":"","notiz":"An einer Geode gebaut, liefert stackweise Splitter.","v":["1.20",null]}],"late":[],"end":[]}},{"material":"Blumen & Farbstoffe","such":["Farbstoff","Dye","Kakao","Kakaobohnen","Seegurken","Sea Pickle","Kaktusblüte","Blumen"],"stufen":{"early":[{"id":"Gjz3dNRwaOI","titel":"BEST Dyes and Flowers Auto Farms TUTORIAL Minecraft (cactus, bean, pickle farms)","kanal":"Rays Works","datum":"2022-03","dauer":"16:49","versionen":"1.21.5–26.3+","rate":"","notiz":"Blumen, Kakaobohnen, Seegurken, Kaktus – fast alle Farbstoffe.","v":["1.21.5",null]}],"mid":[{"id":"Ks5ileJf9NY","titel":"Efficient Auto Cactus Flower Farms! [TUTORIAL] 1.21.5-26.3+","kanal":"Rays Works","datum":"2025-02","dauer":"22:39","versionen":"1.21.5–26.3+","rate":"~58 Blüten/h (3-Chunk-Design)","notiz":"Zielt auf Kaktusblüten (Farbstoff), nicht auf Kaktus selbst – vielleicht eher Stufe C.","v":["1.21.5",null]}],"late":[],"end":[]}},{"material":"Laubstreu & Wildblumen","such":["Leaf Litter","Wildflower"],"stufen":{"early":[{"id":"TjmohVYks4s","titel":"AFK Leaf Litter Farm! and playerless automatic Wildflower Farm 1.21.5-26.3+","kanal":"Rays Works","datum":"2025-01","dauer":"8:51","versionen":"1.21.5–26.3+","rate":"9.700 Wildblumen/h","notiz":"","v":["1.21.5",null]}],"mid":[],"late":[],"end":[]}},{"material":"Glühwürmchenbusch, Busch & trockenes Gras","such":["Firefly Bush","Bush","Dry Grass"],"stufen":{"early":[{"id":"Jhsf3j7CAsY","titel":"Auto Firefly Bush Farm in Minecraft! [TUTORIAL] 1.21.5-26.3+","kanal":"Rays Works","datum":"2025-02","dauer":"9:25","versionen":"1.21.5–26.3+","rate":"","notiz":"⚠ Inzwischen braucht man Schere oder Behutsamkeit zum Ernten – siehe Beschreibung.","v":["1.21.5",null]}],"mid":[],"late":[],"end":[]}},{"material":"Blasses Hängemoos","such":["Pale Moss","Blasser Garten"],"stufen":{"early":[{"id":"2yRuHwQ_HeM","titel":"Simple Hanging Pale Moss Farm (8,700 items/hr) [TUTORIAL] 1.21.4-26.3+","kanal":"Rays Works","datum":"2024-10","dauer":"2:44","versionen":"1.21.4–26.3+","rate":"8.700/h","notiz":"Ernte nur noch per Spieler mit Schere oder Behutsamkeit.","v":["1.21.4",null]}],"mid":[],"late":[],"end":[]}},{"material":"Harz, Augenblüte & Knarz","such":["Resin","Eyeblossom","Creaking","Harzziegel"],"stufen":{"early":[{"id":"RKGeP--yMWE","titel":"How to Build Best AFK Resin Block Farms [TUTORIAL] 1.21.4-26.3+","kanal":"Rays Works","datum":"2024-12","dauer":"22:43","versionen":"1.21.4–26.3+","rate":"","notiz":"Einfaches Design für den Anfang, schnelles Design mit Quasi-Connectivity.","v":["1.21.4",null]}],"mid":[{"id":"84Wo4Blom5M","titel":"Easy Auto Eyeblossom Flower Farm + Creaking Farm 1.21.4-26.3+","kanal":"Rays Works","datum":"2024-11","dauer":"9:56","versionen":"1.21.4–26.3+","rate":"","notiz":"Augenblüten und Knarz; für Harz gilt das Early-Design.","v":["1.21.4",null]}],"late":[],"end":[]}},{"material":"Sniffer-Pflanzen (Fackellilie, Kannenpflanze)","such":["Sniffer","Torchflower","Pitcher Plant","Fackellilie","Kannenpflanze"],"stufen":{"early":[],"mid":[{"id":"WshTGqtDXVU","titel":"MINECRAFT SNIFFER FARM 1.21+ | Easy Auto Torchflower + Pitcher Plant Farm","kanal":"wattles","datum":"2023-05","dauer":"9:25","versionen":"1.20+ (Java & Bedrock)","rate":"","notiz":"","v":["1.20",null]}],"late":[],"end":[]}},{"material":"Gras & Farn","such":["Grass","Fern"],"stufen":{"early":[{"id":"STMFhHA8kkE","titel":"Touch GRASS Farm in Minecraft [STILL WORKS] [TUTORIAL]","kanal":"Rays Works","datum":"2022-09","dauer":"13:26","versionen":"1.19+","rate":"","notiz":"Gras, Farn und hohes Gras automatisch.","v":["1.19",null]}],"mid":[],"late":[],"end":[]}},{"material":"Korallen","such":["Coral"],"stufen":{"early":[],"mid":[{"id":"OxjxpbMGN5k","titel":"Super Small Coral Farm | Tutorial (72k/h)","kanal":"Elyrio3","datum":"2024-03","dauer":"8:15","versionen":"1.20+","rate":"72.000/h","notiz":"Sehr klein für die Rate, zerstört Shulkerboxen statt Box-Loader. Schematic in der Beschreibung.","v":["1.20",null]}],"late":[],"end":[]}},{"material":"Chorus","such":["Chorus Fruit","Purpur","Endstab"],"stufen":{"early":[],"mid":[{"id":"O50GT9Y3G6Y","titel":"Minecraft Chorus Flower Farm - AFKable and Easy to Build!","kanal":"Shulkercraft","datum":"2020-12","dauer":"6:30","versionen":"1.16+","rate":"30–40 Blüten/h","notiz":"","v":["1.16",null]}],"late":[{"id":"uPA1WcuRqh4","titel":"Fast Chorus Fruit Farm, 3k fruit/h, infinitely AFKable","kanal":"FrunoCraft","datum":"2024-10","dauer":"19:03","versionen":"Java 1.16–1.21","rate":"3.000 Früchte/h","notiz":"Erhält sich selbst, modular. ~3 Stunden Bauzeit.","v":["1.16","1.21"]}],"end":[]}},{"material":"Hoglin (Nahrung & Leder)","such":["Schweinefleisch","Porkchop","Leder","Essen","Nahrung"],"stufen":{"early":[{"id":"GlgCZbHSk6c","titel":"Minecraft 1.21+ Hoglin Food and Leather Farm - Super Easy","kanal":"Shulkercraft","datum":"2020-07","dauer":"7:20","versionen":"1.16+, laut Titel 1.21+","rate":"1.700 Koteletts + 250 Leder/h","notiz":"⚠ Kocher-Farm – nach den Babygrößen von 26.1 ungeprüft. Idee von Rays Works.","v":["1.16",null]}],"mid":[{"id":"xW_wisykzV0","titel":"The MOST EFFICIENT Hoglin Farm in Minecraft Java 1.21 (Tutorial)","kanal":"UForced","datum":"2024-04","dauer":"5:08","versionen":"Java 1.21","rate":"2.580 Koteletts + 420 Leder/h","notiz":"⚠ Kocher-Farm – nach den Babygrößen von 26.1 ungeprüft.","v":["1.21","1.21"]}],"late":[],"end":[]}},{"material":"Kaninchen","such":["Hasenpfote","Kaninchenfell","Rabbit"],"stufen":{"early":[{"id":"13CL6YV1L6I","titel":"Crazy New automatic Rabbit Breeder Looting 3 rabbit foot, raw rabbit hide","kanal":"Rays Works","datum":"2026-02","dauer":"14:47","versionen":"26.1+","rate":"","notiz":"Seit 26.1 ist die Kaninchen-Hitbox größer, ältere Farmen laufen nicht mehr. Drei Designs im Video.","v":["26.1",null]}],"mid":[],"late":[],"end":[]}},{"material":"Spinnweben","such":["Cobweb","Netz"],"stufen":{"early":[],"mid":[{"id":"UDKB7MLiYeg","titel":"EASY Auto Web Farm (2,200 cobwebs/hr) [TUTORIAL] 1.21.0-26.3+","kanal":"Rays Works","datum":"2024-07","dauer":"21:57","versionen":"1.21–26.3+","rate":"2.200/h","notiz":"Nutzt den Trank des Webens (1.21): Mobs hinterlassen Spinnweben.","v":["1.21",null]}],"late":[],"end":[]}}]},{"name":"Mob-Drops","eintraege":[{"material":"XP","such":[],"stufen":{"early":[{"id":"xzlQmnCiL60","titel":"Minecraft 1.21+ Easy Armadillo XP Farm - 0-53 levels in 5min","kanal":"Shulkercraft","datum":"2025-06","dauer":"10:16","versionen":"1.21+","rate":"Level 0→53 in 5 Minuten","notiz":"Gürteltier + Silberfische über Tränke des Befalls. ⚠ Braucht einen Braustand (Netherwarzen) für die Tränke. Design: UForced.","v":["1.21",null]}],"mid":[{"id":"nh8voJScSbw","titel":"Minecraft Enderman 1 Hit Farm - Super Fast XP","kanal":"Shulkercraft","datum":"2020-10","dauer":"8:32","versionen":"1.16+, läuft 1.20+","rate":"Level 0→33 in 1 Minute","notiz":"Das iJevin-Design.","v":["1.16",null]}],"late":[{"id":"dfwsIpmOwd4","titel":"Minecraft Elegance: Instant Guardian XP Farm, No Drain","kanal":"ianxofour","datum":"2021-11","dauer":"20:53","versionen":"Java 1.16+","rate":"180.000 XP/h","notiz":"Kein Trockenlegen des Ozeanmonuments, Bau unter 30 Minuten. Gibt nebenbei Prismarin.","v":["1.16",null]}],"end":[]}},{"material":"Allround-Mobfarm (Knochen, Faden, Pulver, …)","such":[],"stufen":{"early":[{"id":"HXEW_wpMeTs","titel":"Minecraft Cheap & Simple Mob Farm | Java 1.14 - 26.1+ | By Shboop","kanal":"The Archivists","datum":"2026-04","dauer":"14:18","versionen":"1.14–26.1+","rate":"","notiz":"Starter-Farm für die ersten Tage, wenig Ressourcen.","v":["1.14",null]}],"mid":[{"id":"WHPhrNxn5zE","titel":"Minecraft 1.21+ Easy All MOB Farm - 7000 items/h","kanal":"Shulkercraft","datum":"2025-08","dauer":"10:56","versionen":"1.21.8+","rate":"7.000/h","notiz":"10 Spawn-Ebenen.","v":["1.21.8",null]}],"late":[{"id":"OKRKQzcq9QQ","titel":"You're Being Lied To About Minecraft Mob Farms","kanal":"potato_noir","datum":"2024-12","dauer":"66:02","versionen":"Java 1.21","rate":"","notiz":"Räumt mit Mythen über Einsteiger-Mobfarmen auf und liefert ein eigenes Design (klein/groß, Wüste/Ozean) mit Schematics.","v":["1.21","1.21"]}],"end":[]}},{"material":"Schwarzpulver (Creeper)","such":[],"stufen":{"early":[],"mid":[{"id":"aYp3C_0Qqdo","titel":"MINECRAFT 1.21 CREEPER FARM | Easy, Efficient, Automatic","kanal":"wattles","datum":"2023-07","dauer":"15:59","versionen":"Java & Bedrock, zuletzt bestätigt 1.20.4","rate":"„Tausende“/h","notiz":"Ohne Katzen und Redstone.","v":["1.20.4","1.20.4"]}],"late":[{"id":"bxp_1WpK1X8","titel":"Minecraft Creeper Farm - Efficient Creeper Only Design","kanal":"Shulkercraft","datum":"2020-08","dauer":"10:18","versionen":"1.16+, läuft 1.20+ mit größerem Dach","rate":"2.300+/h","notiz":"Nur Creeper spawnen.","v":["1.16",null]}],"end":[{"id":"t1IRUCDEtlc","titel":"3 million gunpowder/hour! Fast bortal creeper farms with simple kill chamber","kanal":"FrunoCraft","datum":"2026-08","dauer":"20:28","versionen":"Java 1.21+","rate":"bis 3 Mio/h","notiz":"Bortal-Farm (Boot + Portal), Größe nach Hardware wählbar. Nur Java.","v":["1.21",null]}]}},{"material":"Faden & Spinnenaugen","such":[],"stufen":{"early":[{"id":"LlvqpYTJ4qk","titel":"Minecraft Easy Spider & Cave Spider Spawner XP Farm 26.2+","kanal":"Voltrox","datum":"2025-03","dauer":"3:26","versionen":"1.21+ (Titel 26.2+)","rate":"","notiz":"Aus einem Spinnen- oder Höhlenspinnen-Spawner.","v":["1.21",null]}],"mid":[],"late":[],"end":[]}},{"material":"Schleim","such":[],"stufen":{"early":[],"mid":[{"id":"Ln-F7y669nk","titel":"Fast Simple Oozing Slime Farm for Minecraft 1.21+","kanal":"bigbooty17","datum":"2024-07","dauer":"23:49","versionen":"1.21+","rate":"","notiz":"Mit dem Verschleimungs-Trank (1.21) – kein Schleimchunk nötig. FAQ in der Beschreibung lesen.","v":["1.21",null]}],"late":[{"id":"cerBKl6Gzeg","titel":"Portal Slime Farm (Simple&Efficient) 1.14/1.15","kanal":"ilmango","datum":"2019-09","dauer":"20:46","versionen":"gebaut für 1.14/1.15","rate":"bis 16.800/h","notiz":"Eine der einfachsten Schleimfarmen. ⚠ Alt – vor dem Bau gegen 26.3 prüfen.","v":["1.14","1.15"]}],"end":[]}},{"material":"Magmacreme","such":[],"stufen":{"early":[],"mid":[{"id":"P02KPggEwMc","titel":"Quick & Cheap 1.21 Magma Farm (Java, 1.16-1.21+)","kanal":"potato_noir","datum":"2024-05","dauer":"13:06","versionen":"Java 1.16–1.21+","rate":"3.000+ Creme/h","notiz":"Liefert auch die Magmablöcke für ihre Goldfarm.","v":["1.16",null]}],"late":[{"id":"52ugF4zKZA4","titel":"Fast Magma Cream/Block Farm! 120k cream/h","kanal":"FrunoCraft","datum":"2025-12","dauer":"15:44","versionen":"Java 1.21.x","rate":"120.000 Creme/h (2 Spieler), 50.000 (1 Spieler)","notiz":"","v":["1.21",null]}],"end":[]}},{"material":"Lohenruten (Blaze)","such":[],"stufen":{"early":[{"id":"Net8b6CrLzY","titel":"Minecraft: EASY BLAZE FARM! (26.2 Tutorial)","kanal":"Voltrox","datum":"2024-12","dauer":"3:31","versionen":"1.21 (Titel 26.2)","rate":"","notiz":"Am Blaze-Spawner – billigste Variante, sobald eine Festung gefunden ist.","v":["1.21","26.2"]}],"mid":[{"id":"q7mGXe5dCHA","titel":"Minecraft Blaze Farm - 1000+ Rods Per Hour","kanal":"Shulkercraft","datum":"2020-09","dauer":"8:00","versionen":"1.16+, läuft 1.20+","rate":"1.000+/h","notiz":"Design: EagleEye621.","v":["1.16",null]}],"late":[{"id":"xVM9K4EG_-Y","titel":"SUPER EFFICIENT Blaze Farm 12K Rods/Hr Minecraft Java 26.3","kanal":"Fortun8diamond","datum":"2025-12","dauer":"1:57","versionen":"1.19.3–26.3","rate":"12.000 Ruten/h","notiz":"Mehr als 10× schneller als ein Spawner, kaum Spawnproofing. ⚠ Nur Showcase mit World-Download – das Tutorial ist angekündigt.","v":["1.19.3","26.3"]}],"end":[]}},{"material":"Enderperlen","such":[],"stufen":{"early":[],"mid":[{"id":"zYkOuRoV6V4","titel":"Minecraft Enderman XP Farm 26.3+ - BEST DESIGN | Designed by iJevin","kanal":"moretingz","datum":"2024-06","dauer":"8:10","versionen":"1.16–26.3+ (Java)","rate":"4.000 Perlen/h, Level 0→30 in 1 min","notiz":"Das bekannte iJevin-Design (gleiches Prinzip wie die Enderman-Farm bei XP).","v":["1.16",null]}],"late":[],"end":[]}},{"material":"Ghast-Tränen","such":[],"stufen":{"early":[],"mid":[{"id":"0LZd8hxLBUA","titel":"The BEST Ghast Farm in Minecraft 26.3+ (Tutorial)","kanal":"Triloms","datum":"2025-06","dauer":"4:47","versionen":"26.3+","rate":"","notiz":"Kompakt, liefert auch Schwarzpulver.","v":["26.3",null]}],"late":[{"id":"FMAKZUyGFX4","titel":"Minecraft Elegance: Looting Ghast Farms (up to 7200 tears/h, 9000 gp/h)","kanal":"ianxofour","datum":"2022-04","dauer":"17:32","versionen":"Java 1.16+","rate":"bis 7.200 Tränen/h","notiz":"Sehr sparsam mit Obsidian. Für den Happy Ghast (1.21.6) hat Rays Works eine eigene Dried-Ghast-Farm: https://youtu.be/Z8OnW2ALhbM","v":["1.16",null]}],"end":[]}},{"material":"Wither-Skelett-Schädel","such":[],"stufen":{"early":[],"mid":[{"id":"TMKrBswfSgM","titel":"Minecraft 26.2 EASY Wither Skeleton Farm - No Spawnproofing","kanal":"Voltrox","datum":"2026-08","dauer":"9:31","versionen":"26.2","rate":"140 Schädel/h","notiz":"Ohne Spawnproofing. Design von ianxofour (im Video genannt).","v":["26.2","26.2"]}],"late":[{"id":"-SIWj_Tc2oA","titel":"Wither Skeleton Farm 400 Skulls per Hour for Minecraft 1.21+, 26.1-26.3","kanal":"Fortun8diamond","datum":"2023-05","dauer":"34:42","versionen":"1.16–26.3","rate":"400 Schädel/h","notiz":"Hinweise in der Beschreibung vor dem Bau lesen (Festungs-Bounding-Box).","v":["1.16","26.3"]}],"end":[]}},{"material":"Shulker-Schalen","such":[],"stufen":{"early":[],"mid":[{"id":"s7JZWGcnHYA","titel":"Minecraft Fast & Simple Shulker Farm | Java 1.17 - 1.21+ | by Balllight","kanal":"The Archivists","datum":"2024-04","dauer":"14:04","versionen":"1.17–1.21+","rate":"","notiz":"In unter 30 Minuten gebaut. ⚠ Für Version 3 gibt es einen Armor-Stand-Fix (https://youtu.be/aoR_QUS_gRs).","v":["1.17",null]}],"late":[{"id":"pQfJChwRpXs","titel":"Minecraft 1.21+ Easy Shulker Shell Farm - 950 Shells Per Hour","kanal":"Shulkercraft","datum":"2025-07","dauer":"10:10","versionen":"1.21+","rate":"950 Schalen/h","notiz":"Eine Dimension, keine Portale, keine Schneegolems. Design: EndingCredits.","v":["1.21",null]}],"end":[]}},{"material":"Prismarin (Wächter)","such":[],"stufen":{"early":[],"mid":[{"id":"Gt8hQRMYNuQ","titel":"Minecraft EASY Guardian Farm - No Portals - 5000+ Per/h","kanal":"Shulkercraft","datum":"2024-03","dauer":"9:48","versionen":"1.20+","rate":"5.000+/h","notiz":"Kein Trockenlegen, keine Portale. Design: MineTheFab.","v":["1.20",null]}],"late":[{"id":"dfwsIpmOwd4","titel":"Minecraft Elegance: Instant Guardian XP Farm, No Drain","kanal":"ianxofour","datum":"2021-11","dauer":"20:53","versionen":"Java 1.16+","rate":"~74.000 Drops/h (ab 1.18)","notiz":"Dieselbe Farm wie bei XP (Late Game).","v":["1.16",null]}],"end":[{"id":"Set2fFwwgmE","titel":"How To Build a 600,000 Items Per/h Guardian Farm in Minecraft","kanal":"Shulkercraft","datum":"2023-05","dauer":"8:00","versionen":"1.19+","rate":"600.000/h","notiz":"Großprojekt am Monument, MiniHUD empfohlen.","v":["1.19",null]}]}},{"material":"Tintenbeutel","such":[],"stufen":{"early":[{"id":"0Yjvu0yehgY","titel":"Minecraft EASY Squid Ink Sac Farm - 4100 Per Hour!","kanal":"Shulkercraft","datum":"2024-04","dauer":"11:03","versionen":"1.20+, laut Kommentaren läuft sie bis 26.3","rate":"4.100/h","notiz":"Design: ladesda. Viel Trockenlegen nötig – kleinen Fluss wählen (~80 Blöcke Umkreis). Tipps aus den Kommentaren: Unter Y=33 gebaut (AFK-Punkt 109 Blöcke höher) wird daraus eine Leuchttintenfisch-Farm. Spawnt nichts, blockieren oft Tintenfische woanders das globale Mob-Limit.","v":["1.20",null]}],"mid":[],"late":[],"end":[]}},{"material":"Redstone & Glowstone (Hexen)","such":[],"stufen":{"early":[],"mid":[{"id":"xn5FhPuhy8M","titel":"Best Witch Redstone Farm for 1.16-26.3+ Minecraft","kanal":"Rays Works","datum":"2024-07","dauer":"42:03","versionen":"1.16–26.3+","rate":"","notiz":"⚠ Ab 1.21.10 ziehen Blasensäulen die Schneebälle evtl. zu stark – Wasser einen Block tiefer setzen.","v":["1.16",null]}],"late":[{"id":"PuWl434ov-8","titel":"Easy witch farm Minecraft Java 1.21-26.x, near max rates, 8k redstone/h, 2h build","kanal":"FrunoCraft","datum":"2024-07","dauer":"42:12","versionen":"1.21–26.x","rate":"8.000 Redstone/h","notiz":"Etwa 2 Stunden Bauzeit, ~90 % der Maximalrate einer Hexenhütte; dazu je ~750 Pulver, Glowstone, Zucker usw.","v":["1.21",null]}],"end":[]}},{"material":"Smaragde & Totems (Raid)","such":[],"stufen":{"early":[{"id":"2l2Jr-rHGt0","titel":"EINFACHE RAID FARM (TUTORIAL) ✨Minecraft 26.3","kanal":"ErikOnHisPeriod","datum":"2026-10","dauer":"19:22","versionen":"26.3","rate":"","notiz":"Deutsch. Eriks neues Video von vor 10 Tagen, ausdrücklich für 26.3. Eriks ältere Version (https://youtu.be/fAYzgDKgm9Q) ist von Oktober 2024, also vor der Raid-Änderung in 1.21.2, und nur im Titel auf 26.3 gesetzt – ob es noch läuft, ist unsicher.","v":["26.3","26.3"]}],"mid":[{"id":"noP37m8qBiM","titel":"Minecraft 1.21.2+ Super Simple Raid Farm - 9000 Items Per Hour","kanal":"Shulkercraft","datum":"2025-07","dauer":"11:06","versionen":"1.21.2+","rate":"9.000/h","notiz":"Nur ein Villager, ~30 Minuten Bauzeit. Design: MagPlum.","v":["1.21.2",null]}],"late":[{"id":"Oq47modgU6s","titel":"NEW Auto Raid Farm that NEVER Stops… 1.21.2-26.3+","kanal":"Rays Works","datum":"2024-12","dauer":"53:11","versionen":"1.21.2–26.3+","rate":"","notiz":"Erzeugt die Ominous Bottles selbst und läuft endlos.","v":["1.21.2",null]}],"end":[{"id":"OAS8qN5P6C4","titel":"NashRaid: The BEST Possible Raid Farm (1.21.5 - 26.3+) | Full Tutorial","kanal":"Nash","datum":"2026-07","dauer":"14:51","versionen":"1.21.5–26.3+","rate":"","notiz":"Maximal-Design mit Schematic und World-Download.","v":["1.21.5",null]}]}},{"material":"Phantomhaut","such":[],"stufen":{"early":[],"mid":[{"id":"JWfXOqLr2HQ","titel":"Minecraft Easy Phantom Farming - 100+ Membrane Per Hour","kanal":"Shulkercraft","datum":"2020-10","dauer":"4:20","versionen":"1.16+","rate":"100+/h","notiz":"Phantome spawnen nur, wenn man länger nicht geschlafen hat.","v":["1.16",null]}],"late":[],"end":[]}},{"material":"Piglin-Tauschhandel","such":[],"stufen":{"early":[],"mid":[{"id":"hRw9ks89E-E","titel":"Minecaft 1.21 Bartering Farm: Your Storage Isn't Ready","kanal":"potato_noir","datum":"2024-08","dauer":"29:09","versionen":"Java 1.21","rate":"","notiz":"Hängt direkt an ihre Goldfarm (Gold, Mid Game).","v":["1.21","1.21"]}],"late":[{"id":"ojydo0MYJr0","titel":"Minecraft Elegance: Instant Bartering Farm Farm (800k+ dph)","kanal":"ianxofour","datum":"2022-01","dauer":"13:53","versionen":"Java 1.16+","rate":"800.000+ Drops/h","notiz":"⚠ Ab 1.19 können Piglins aus dem Gerüst laufen – Workaround in der Beschreibung.","v":["1.16",null]}],"end":[]}},{"material":"Schildkrötenpanzer & Eier","such":["Scute","Turtle","Schildkröte","Seegras"],"stufen":{"early":[{"id":"03NN3ksP6Z0","titel":"Minecraft Turtle Egg Farm - Hundreds of Eggs/Scutes Per Hour!","kanal":"Shulkercraft","datum":"2021-04","dauer":"9:59","versionen":"1.16+, läuft 1.20+","rate":"Hunderte Panzerschuppen/h","notiz":"","v":["1.16",null]}],"mid":[{"id":"9eVrN40jCxM","titel":"Minecraft Turtle Scute & Seagrass Farm 26.3+ - BEST DESIGN","kanal":"moretingz","datum":"2025-11","dauer":"6:30","versionen":"26.3+","rate":"","notiz":"Mit Seegras nebenbei, kaum Redstone.","v":["26.3",null]}],"late":[],"end":[]}},{"material":"Gürteltier-Hornschilde","such":["Armadillo","Scute","Wolfsrüstung"],"stufen":{"early":[{"id":"ycb1DYRO70Q","titel":"The EASIEST Armadillo Scute Farm in Minecraft 1.21 (Tutorial)","kanal":"UForced","datum":"2024-12","dauer":"1:38","versionen":"Java 1.21","rate":"","notiz":"Braucht Pinsel in Massen (Wolfsrüstung).","v":["1.21","1.21"]}],"mid":[],"late":[],"end":[]}},{"material":"Ziegenhörner","such":["Goat Horn","Ziege"],"stufen":{"early":[],"mid":[{"id":"L0cPnz8W3nQ","titel":"NEW Goat Horn Farm | EASY BUILD | Minecraft Java 26.2+","kanal":"SpawnCamped","datum":"2026-08","dauer":"10:55","versionen":"26.2+","rate":"","notiz":"","v":["26.2",null]}],"late":[],"end":[]}},{"material":"Froschlichter","such":["Froglight","Frosch"],"stufen":{"early":[],"mid":[{"id":"n7s4yTXWzoI","titel":"Minecraft All Colors Froglight Farm - 5000+ Per Hour","kanal":"Shulkercraft","datum":"2022-06","dauer":"9:34","versionen":"1.19+","rate":"5.000+/h","notiz":"Alle drei Farben.","v":["1.19",null]}],"late":[{"id":"eqw_NPUEiVs","titel":"BEST Minecraft FROGLIGHT FARM - Simple, New design | Java 1.21.10+","kanal":"SpawnCamped","datum":"2025-12","dauer":"11:55","versionen":"Java 1.21.10+","rate":"30+ Stacks je Farbe pro Stunde","notiz":"","v":["1.21.10",null]}],"end":[]}},{"material":"Sculk","such":[],"stufen":{"early":[],"mid":[{"id":"ItNIX4IW2Xo","titel":"SUPER Farm! AFK 5-in-1 Sculk, XP, Vein, Sensor & Shrieker","kanal":"Rays Works","datum":"2022-07","dauer":"18:54","versionen":"1.19+","rate":"","notiz":"Sculk, Ader, Sensor, Kreischer und XP aus einer Farm. Loren können in Kurven entgleisen.","v":["1.19",null]}],"late":[],"end":[]}},{"material":"Leuchttintenfisch, Axolotl & Tropenfische","such":["Glow Squid","Leuchttintenbeutel","Axolotl","Tropenfisch","Delfin"],"stufen":{"early":[],"mid":[{"id":"pdDIrU4CdnU","titel":"Great Auto Squid, Fish, Axolotl Farms! 1.18-26.3+ (Tropical fish, dolphin, glow squid)","kanal":"Rays Works","datum":"2021-12","dauer":"16:28","versionen":"1.18–26.3+","rate":"","notiz":"⚠ Neuere Loren-Höhen ändern das Zielen bei der Tropenfisch-Farm – Hinweise in der Beschreibung.","v":["1.18",null]}],"late":[],"end":[]}},{"material":"Schwefelwürfel & Schwefel (26.2)","such":["Sulfur","Schwefel","Sulfur Cube"],"stufen":{"early":[],"mid":[{"id":"gKtPJODWHcM","titel":"SULFUR CUBE FARM Tutorial | EINFACH | Schwefelwürfel Farm | 26.2+","kanal":"TheJoCraft","datum":"2026-07","dauer":"15:27","versionen":"26.2+","rate":"","notiz":"Deutsch.","v":["26.2",null]}],"late":[],"end":[]}},{"material":"Trial Chambers (Windladungen, Prüfungsschlüssel, Streitkolben)","such":["Breeze","Wind Charge","Trial Key","Mace","Heavy Core","Diamanten","Goldapfel"],"stufen":{"early":[],"mid":[],"late":[{"id":"Yj8l8X42wcA","titel":"I made a Mace Farm in Minecraft... [TUTORIAL] (Ench Golden Apple Farm, Diamond Farm) 1.21-26.3+","kanal":"Rays Works","datum":"2024-06","dauer":"25:24","versionen":"1.21–26.3+","rate":"","notiz":"Fünf Designs: Breeze-Ruten, Windladungen, Prüfungsschlüssel – bis zu Streitkolben, verzauberten Goldäpfeln und Diamanten aus dem Ominous Vault.","v":["1.21",null]}],"end":[]}}]},{"name":"Seltenes & Spezielles","eintraege":[{"material":"Musikplatten","such":["Music Disc","Schallplatte","Platte"],"stufen":{"early":[],"mid":[{"id":"jFjt5ubwlAI","titel":"Creeper Music Disc Farm + Auto Sorter + Gunpowder","kanal":"Rays Works","datum":"2021-10","dauer":"6:48","versionen":"1.18+","rate":"","notiz":"Alle Creeper-Platten mit Sortierer. Neueste Fassung im Farm-Everything-Dokument: http://bit.ly/FarmEverything","v":["1.18",null]},{"id":"Fk64kmwBG40","titel":"Farming New disc is HARDER than you think... (Lava Chicken Music Disc) 1.21.7+","kanal":"Rays Works","datum":"2025-06","dauer":"15:12","versionen":"1.21.7+","rate":"","notiz":"Die Lava-Chicken-Platte. Von den 26.1-Änderungen an Baby-Zombies nicht betroffen.","v":["1.21.7",null]},{"id":"-wcp6SEErSw","titel":"AFK Automatic Tears Music Disc farm 1.21.7-26.3+","kanal":"Rays Works","datum":"2025-05","dauer":"17:22","versionen":"1.21.7–26.3+","rate":"","notiz":"Die „Tears“-Platte.","v":["1.21.7",null]}],"late":[],"end":[]}},{"material":"Happy Ghast (Getrockneter Ghast)","such":["Dried Ghast","Ghastling","Happy Ghast"],"stufen":{"early":[],"mid":[{"id":"Z8OnW2ALhbM","titel":"I just had to make this Farm... (auto Happy Ghast) Ghast tears, Dried ghast 1.21.8-26.3+","kanal":"Rays Works","datum":"2025-04","dauer":"14:20","versionen":"1.21.8–26.3+","rate":"","notiz":"Knochenfarm + Ghastfarm im Seelensandtal → getrocknete Ghasts. Neuere Variante, nachdem Mojang etwas geändert hat: https://youtube.com/shorts/0tk1jL-Yzmk","v":["1.21.8",null]}],"late":[],"end":[]}},{"material":"Allay","such":[],"stufen":{"early":[{"id":"UraRIUwNJ8A","titel":"Easy Allay Auto Breeder system in Minecraft [STILL WORKS] [TUTORIAL]","kanal":"Rays Works","datum":"2022-12","dauer":"4:21","versionen":"1.19+","rate":"","notiz":"Ab 1.19.4 die Platte „mellohi“ oder „11“ nehmen.","v":["1.19",null]}],"mid":[],"late":[],"end":[]}},{"material":"Kamel","such":[],"stufen":{"early":[{"id":"AkP0r7U2zv8","titel":"INFINITE Camel machine in Minecraft [STILL WORKS] [TUTORIAL]","kanal":"Rays Works","datum":"2022-11","dauer":"3:39","versionen":"1.20+","rate":"","notiz":"","v":["1.20",null]}],"mid":[],"late":[],"end":[]}},{"material":"Fahrender Händler, Lamas & Leinen","such":["Wandering Trader","Lama","Leine","Milch"],"stufen":{"early":[],"mid":[{"id":"cWQOxZON8Bw","titel":"Why is this Farm so hard to design? (Wandering Trader Llama farm, Milking Farm) 1.14-26.3+","kanal":"Rays Works","datum":"2025-05","dauer":"24:26","versionen":"1.14–26.3+","rate":"","notiz":"Seit 1.21.4 ist Void-Trading generft – dafür diese Farm.","v":["1.14",null]}],"late":[],"end":[]}},{"material":"Kupfergolem-Statuen & Kupfertruhen","such":["Copper Golem","Statue"],"stufen":{"early":[],"mid":[{"id":"OVGJvFFAWnU","titel":"1 Machine 40 Unique Item Farms (Copper Golem Statue and Copper Chest Farms)","kanal":"Rays Works","datum":"2025-10","dauer":"8:03","versionen":"1.21.9+","rate":"","notiz":"Alle 32 Posen der Statue.","v":["1.21.9",null]}],"late":[],"end":[]}},{"material":"Kolben & Crafter","such":["Piston","Crafter","Redstone"],"stufen":{"early":[],"mid":[],"late":[{"id":"Vfs1Q-kIQlc","titel":"Auto Piston Farm and AFK Crafter Block Farm! 1.21.0-26.3+","kanal":"Rays Works","datum":"2023-12","dauer":"10:09","versionen":"1.21–26.3+","rate":"","notiz":"Eine Fabrik, die Kolben und Crafter selbst herstellt.","v":["1.21",null]}],"end":[]}},{"material":"Seltene Halloween-Mobs","such":["Zombiepferd","Zombie Horse","Nautilus","Kamel"],"stufen":{"early":[],"mid":[],"late":[{"id":"WNuY_7h0Zqk","titel":"Can you Farm them? Parched Husk Camel, Zombie horse, zombie nautilus jockey","kanal":"Rays Works","datum":"2025-10","dauer":"21:48","versionen":"1.21.11+","rate":"","notiz":"Ab 1.21.11 reicht Rechtsklick auf das Reittier, damit es nicht despawnt.","v":["1.21.11",null]}],"end":[]}},{"material":"Leuchtfeuer","such":["Beacon","Netherstern","Wither"],"stufen":{"early":[],"mid":[],"late":[],"end":[{"id":"hWSoCYUAxBY","titel":"11 YEARS to finish this Minecraft redstone machine [Auto Beacon Farm]","kanal":"Rays Works","datum":"2023-12","dauer":"21:56","versionen":"1.21+","rate":"","notiz":"Vollautomatische Leuchtfeuer-Fabrik. Fix für Perlen-Chunkloading und Goldfarm ab 1.21.5 in der Beschreibung.","v":["1.21",null]}]}}]},{"name":"Infrastruktur","eintraege":[{"material":"Villager-Brüter","such":[],"stufen":{"early":[{"id":"kcjd1vMCl24","titel":"Minecraft Villager Breeder FIXED for 1.21/26.1+","kanal":"ReytGood","datum":"2026-05","dauer":"3:04","versionen":"1.21 / 26.1+","rate":"","notiz":"Ausdrücklich für 26.1 angepasst – ältere Brüter-Designs sind seit den neuen Babygrößen teils kaputt.","v":["1.21",null]},{"id":"aTKJqJEa8Zg","titel":"Minecraft Elegance: Instant Trading Hall with Villager Breeder (Java)","kanal":"ianxofour","datum":"2021-01","dauer":"6:15","versionen":"Java 1.16/1.17","rate":"","notiz":"Brüter und Trading Hall in einem. ⚠ Von 2021 – ReytGood bestätigt, dass 26.1 ältere Brüter gebrochen hat; vor dem Bau prüfen.","v":["1.16","1.17"]},{"id":"xNuBDFWj5Vw","titel":"Minecraft Villager Breeder Farm 26.3+ - BEST DESIGN","kanal":"moretingz","datum":"2024-12","dauer":"8:01","versionen":"laut Beschreibung 1.14–26.3+","rate":"8 Villager/h","notiz":"Unter einer Stunde gebaut. ⚠ Video von vor 26.1 – Angabe „26.3+“ nur in der Beschreibung aktualisiert.","v":["1.14",null]}],"mid":[],"late":[],"end":[]}},{"material":"Trading Hall","such":[],"stufen":{"early":[{"id":"uxvApVVWE0Q","titel":"EASY Minecraft 1.21 Villager Trading Hall - All Trades 1 Emerald!","kanal":"Kysen","datum":"2025-03","dauer":"3:47","versionen":"1.21+","rate":"","notiz":"Alle Trades auf 1 Smaragd per Zombie-Heilung; Villager tauschbar, ohne andere zu verärgern.","v":["1.21",null]}],"mid":[],"late":[{"id":"oJDRiV3kJJI","titel":"Time to Make the Ultimate Villager Trading Matrix","kanal":"cubicmetre","datum":"2024-02","dauer":"15:26","versionen":"1.20+","rate":"","notiz":"Technisches Großprojekt mit World-Download (nicht drehen).","v":["1.20",null]}],"end":[]}},{"material":"Lager & Sortierung","such":[],"stufen":{"early":[{"id":"4XM68iqBkGU","titel":"Minecraft: EASY Copper Golem SORTING SYSTEM Tutorial! (5 Designs)","kanal":"silentwisperer","datum":"2025-10","dauer":"21:15","versionen":"1.21.9+ (Java & Bedrock)","rate":"","notiz":"Kupfergolem-Sortierer ohne Redstone, billig – ideal für den Anfang.","v":["1.21.9",null]}],"mid":[{"id":"HsvCZH3Et1Y","titel":"Minecraft Easiest Sorting System - How to Build & Use","kanal":"Shulkercraft","datum":"2025-05","dauer":"8:01","versionen":"1.21+","rate":"","notiz":"Klassischer Hopper-Sortierer, auch Filtern und Einsatz im Nether erklärt.","v":["1.21",null]}],"late":[{"id":"wGtogCBWzZo","titel":"3-in-1 Smart Compression Storage! (Tileable sorter, crafter, and shulkerbox loader)","kanal":"impulseSV","datum":"2026-06","dauer":"12:28","versionen":"Java 1.21+","rate":"~1 Mio Items pro Doppelkiste","notiz":"Sortiert, crafted zu Blöcken und packt in Shulkerboxen.","v":["1.21",null]}],"end":[{"id":"1pHXCvc0j-I","titel":"How to Build the Ultimate Storage","kanal":"cubicmetre","datum":"2025-11","dauer":"30:25","versionen":"","rate":"","notiz":"Das große, komplexe Lagersystem – mehr Konzept und Werkzeuge als Block-für-Block.","v":null}]}},{"material":"Shulkerbox-Lader & -Entlader","such":[],"stufen":{"early":[],"mid":[{"id":"VEkq0eL7_Ew","titel":"Minecraft EASY Shulker Box Loader & Unloader","kanal":"Shulkercraft","datum":"2024-05","dauer":"5:47","versionen":"1.20+","rate":"","notiz":"Reihbar, für Farmen und Lager. Design: samosthesage.","v":["1.20",null]}],"late":[],"end":[]}},{"material":"Super-Schmelze","such":[],"stufen":{"early":[{"id":"iDywFVfxAUE","titel":"Minecraft Super Smelter: Simplest, Automatic, ANY SIZE!","kanal":"mysticat","datum":"2020-12","dauer":"3:26","versionen":"1.16+","rate":"","notiz":"Beliebig groß, mit 8 Öfen anfangen.","v":["1.16",null]}],"mid":[{"id":"CWPBuSGEwQY","titel":"Minecraft Fast Super Smelter - 64 Furnace Smelter","kanal":"Shulkercraft","datum":"2021-10","dauer":"18:17","versionen":"1.17+","rate":"10 Stacks in 3 Minuten","notiz":"Design: ShaydeeJay; Fixes: https://youtu.be/6s2jyotyv3s. Lava als Brennstoff geht – leere Eimer ziehen die Trichter unter den Öfen mit heraus, sie landen beim Schmelzgut.","v":["1.17",null]}],"late":[],"end":[]}},{"material":"Beton-Fabrik","such":[],"stufen":{"early":[],"mid":[{"id":"C7dyKU85A0I","titel":"Minecraft 1.21+ EASY Fully Automatic Concrete Maker","kanal":"Shulkercraft","datum":"2024-06","dauer":"10:19","versionen":"1.21+","rate":"54.000/h","notiz":"Design: Fortun8diamond.","v":["1.21",null]}],"late":[{"id":"V9XbKprbbbg","titel":"Fastest Vanilla Concrete Converter (72,000 per hour)","kanal":"ilmango","datum":"2021-05","dauer":"6:28","versionen":"1.16+","rate":"72.000/h","notiz":"Braucht eine umgelegte Platzieren-Taste. Showcase mit Litematic.","v":["1.16",null]}],"end":[]}},{"material":"Nether-Hub & Eisbahn","such":[],"stufen":{"early":[],"mid":[{"id":"K94789i0zRk","titel":"How to Link Portals and Build a Nether Hub in Minecraft - Guide","kanal":"Eyecraftmc","datum":"2022-03","dauer":"19:53","versionen":"1.18+","rate":"","notiz":"Portale sauber verknüpfen, Hub planen.","v":["1.18",null]}],"late":[{"id":"yY3b74lk8Tk","titel":"The Fastest Nether Fast Travel! (Survival Guide S3 Ep.104)","kanal":"Pixlriffs","datum":"2024-08","dauer":"17:14","versionen":"1.21","rate":"bis 72 Blöcke/s","notiz":"Bootbahn auf Blaueis.","v":["1.21","1.21"]}],"end":[]}},{"material":"Mob-Schalter","such":[],"stufen":{"early":[],"mid":[{"id":"J6gtmxOyO_E","titel":"SIMPLEST Mob Switch in Minecraft 26.3","kanal":"Fortun8diamond","datum":"2025-01","dauer":"7:39","versionen":"1.21–26.3","rate":"","notiz":"Stoppt das Spawnen von Monstern, damit Farmen mehr abwerfen. Seit 1.21.5 bleiben die Chunks geladen.","v":["1.21","26.3"]}],"late":[],"end":[]}},{"material":"Perimeter & World Eater","such":[],"stufen":{"early":[],"mid":[],"late":[],"end":[{"id":"V-i7BmrIFEg","titel":"Minecraft Perimeter Start to Finish Tutorial with TNT Flying Machine","kanal":"Shulkercraft","datum":"2020-12","dauer":"18:32","versionen":"1.16+","rate":"","notiz":"Von der Standortwahl bis zur fertigen Leere, mit TNT-Flugmaschine.","v":["1.16",null]},{"id":"0T5BNjw4V6M","titel":"How to run a world eater and create a perimeter in Minecraft Survival! Java 1.16-26.x","kanal":"FrunoCraft","datum":"2025-05","dauer":"31:20","versionen":"Java 1.16–26.x","rate":"","notiz":"Vorbereitung, Größe, Standort, Graben – der Weg über einen World Eater.","v":["1.16",null]}]}},{"material":"Chunk-Loader","such":["Chunkloader","Chunk loader","Perle"],"stufen":{"early":[{"id":"TfIlcuei3Vk","titel":"EASY Minecraft Pearl Chunk Loader | Java 26.3","kanal":"Pluck","datum":"2026-07","dauer":"1:10","versionen":"26.1+","rate":"","notiz":"Enderperlen-Chunk-Loader aus Seelensand, Kelp und einer Perle.","v":["26.1",null]}],"mid":[{"id":"7A806SQOSP4","titel":"The Only Chunk-Loading Tutorial you need (Java)","kanal":"C5","datum":"2026-08","dauer":"21:09","versionen":"Java 1.21.5+","rate":"","notiz":"Ein Chunk-Loading-Netz für beliebige Bereiche, mit Erklärung warum und wie.","v":["1.21.5",null]}],"late":[],"end":[]}},{"material":"Enderperlen-Stasis","such":["Stasis","Teleporter","Enderperle"],"stufen":{"early":[{"id":"ci0JD7cEG-Y","titel":"Easy Stasis Chamber Tutorial! Minecraft Java 1.21.11","kanal":"Outcraft Wiki ENGLISH","datum":"2025-12","dauer":"3:44","versionen":"1.21.11","rate":"","notiz":"Einfache Teleport-Kammer.","v":["1.21.11","1.21.11"]}],"mid":[{"id":"Dt32OFyGwdE","titel":"NEW Best Wireless Redstone Teleporter? Ender pearl stasis chamber automatic machine","kanal":"Rays Works","datum":"2026-01","dauer":"18:15","versionen":"1.21.2+","rate":"","notiz":"Kabellos: löst beim Neu-Einloggen aus.","v":["1.21.2",null]}],"late":[],"end":[]}},{"material":"Perlenkanone","such":["Pearl Cannon","Transport","Fernreise"],"stufen":{"early":[],"mid":[],"late":[{"id":"gbumI1JYt94","titel":"This small machine sends you MILLIONS of blocks... Breeze wind charge ender pearl cannon launcher","kanal":"Rays Works","datum":"2025-10","dauer":"14:06","versionen":"1.21+","rate":"","notiz":"Schießt dich mit Windladungen Millionen Blöcke weit.","v":["1.21",null]}],"end":[]}},{"material":"Auto-Brauerei","such":["Tränke","Potion","Braustand","Brauen"],"stufen":{"early":[{"id":"0aDQtQAuhcc","titel":"SMALLEST Auto Brewer in Minecraft! (does all potions) 1.5-26.3+","kanal":"Rays Works","datum":"2024-12","dauer":"12:57","versionen":"1.5–26.3+","rate":"","notiz":"Winzig und kann alle Tränke.","v":["1.5",null]}],"mid":[{"id":"DOqig_l-Kx4","titel":"Minecraft Potion Brewing Station - Automatic, All Potions","kanal":"Chapman Farms","datum":"2026-08","dauer":"14:32","versionen":"1.21+","rate":"","notiz":"Knopfdruck pro Trank, Zutaten laufen über eine Spender-Trichter-Kette.","v":["1.21",null]}],"late":[],"end":[]}}]}]};
+const TIERS = [["early","Early Game"],["mid","Mid Game"],["late","Late Game"],["end","End Game"]];
+const VERSIONS = ["26.3","26.2","26.1","1.21","1.20","1.19","1.18","1.17","1.16"];
+const HOSTED = /^https?:$/.test(location.protocol);
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("bauhub." + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("bauhub." + k, JSON.stringify(v)); } catch (e) {} }
+};
+let built = new Set(store.get("gebaut", []));
+const state = { q: "", group: "", tiers: new Set(), ver: "", hideBuilt: false };
+
+// ---------- helpers
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const linkify = s => esc(s).replace(/https?:\/\/[^\s)]+/g, u => `<a href="${u}" target="_blank" rel="noopener">${u.replace(/^https?:\/\/(www\.)?/, "")}</a>`);
+const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+function vparts(v) { return v.split(".").map(Number); }
+function vcmp(a, b) {
+  const x = vparts(a), y = vparts(b);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const d = (x[i] ?? 0) - (y[i] ?? 0); if (d) return d;
+  }
+  return 0;
+}
+// "1.21" als Obergrenze heißt "alle 1.21.x"
+const upper = v => vparts(v).length === 2 ? v + ".999" : v;
+function coversVersion(range, sel) {
+  if (!sel) return true;
+  if (!range) return false;
+  const lo = sel, hi = upper(sel);
+  const [a, b] = range;
+  return vcmp(a, hi) <= 0 && (b === null || vcmp(upper(b), lo) >= 0);
+}
+
+// ---------- render
+function videoHTML(r) {
+  const year = r.datum ? r.datum.slice(0, 4) : "";
+  const isBuilt = built.has(r.id);
+  return `<div class="vid${isBuilt ? " is-built" : ""}" data-id="${r.id}">
+    <button class="thumb" data-id="${r.id}" aria-label="Video abspielen: ${esc(r.titel)}">
+      <img loading="lazy" alt="" src="https://i.ytimg.com/vi/${r.id}/mqdefault.jpg">
+      <span class="play"></span>${r.dauer ? `<span class="len">${esc(r.dauer)}</span>` : ""}
+    </button>
+    <div>
+      <p class="vtitle"><a href="https://www.youtube.com/watch?v=${r.id}" target="_blank" rel="noopener">${esc(r.titel)}</a></p>
+      <div class="meta">
+        <span>${esc(r.kanal)}${year ? " · " + year : ""}</span>
+        ${r.versionen ? `<span class="tag">${esc(r.versionen)}</span>` : ""}
+        ${r.rate ? `<span class="rate">${esc(r.rate)}</span>` : ""}
+      </div>
+      ${r.notiz ? `<p class="note">${linkify(r.notiz)}</p>` : ""}
+      <label class="done"><input type="checkbox" data-built="${r.id}"${isBuilt ? " checked" : ""}> gebaut</label>
+    </div>
+  </div>`;
+}
+
+function visibleRows(m) {
+  const out = [];
+  for (const [key, label] of TIERS) {
+    if (state.tiers.size && !state.tiers.has(key)) continue;
+    let rows = m.stufen[key] || [];
+    rows = rows.filter(r => r.leer ? !state.ver && !state.hideBuilt : coversVersion(r.v, state.ver) && !(state.hideBuilt && built.has(r.id)));
+    if (rows.length) out.push([key, label, rows]);
+  }
+  return out;
+}
+
+function matches(m) {
+  if (!state.q) return true;
+  const hay = norm([m.material, ...(m.such || []),
+    ...Object.values(m.stufen).flat().map(r => r.leer ? "" : `${r.titel} ${r.kanal}`)].join(" "));
+  return norm(state.q).split(/\s+/).every(w => hay.includes(w));
+}
+
+let openSet = new Set(store.get("offen", []));
+function render() {
+  const list = document.getElementById("list");
+  let html = "", nMat = 0, nVid = 0;
+  for (const g of DATA.gruppen) {
+    if (state.group && state.group !== g.name) continue;
+    let gh = "";
+    for (const m of g.eintraege) {
+      if (!matches(m)) continue;
+      const vis = visibleRows(m);
+      if (!vis.some(([, , rows]) => rows.some(r => !r.leer))) continue;
+      nMat++;
+      const vids = Object.values(m.stufen).flat().filter(r => !r.leer);
+      const nb = vids.filter(r => built.has(r.id)).length;
+      nVid += vis.reduce((s, [, , rows]) => s + rows.filter(r => !r.leer).length, 0);
+      const dots = TIERS.map(([k]) => `<span class="dot ${k}${(m.stufen[k] || []).some(r => !r.leer) ? " on" : ""}" title="${k}"></span>`).join("");
+      const open = state.q || openSet.has(m.material) ? " open" : "";
+      gh += `<details class="mat"${open} data-m="${esc(m.material)}">
+        <summary><span class="mname">${esc(m.material)}</span><span class="dots">${dots}</span>
+        <span class="built-n">${nb ? `${nb}/${vids.length} gebaut` : ""}</span></summary>
+        <div class="rows">${vis.map(([k, label, rows]) => `<div class="row"><span class="tier ${k}">${label.replace(" Game", "")}</span><div>${
+          rows.map(r => r.leer ? `<p class="empty">— ${esc(r.leer)}</p>` : videoHTML(r)).join("")}</div></div>`).join("")}</div>
+      </details>`;
+    }
+    if (gh) html += `<section class="group"><h2>${esc(g.name)}</h2>${gh}</section>`;
+  }
+  list.innerHTML = html || `<p class="none">Nichts gefunden.</p>`;
+  document.getElementById("count").textContent = `${nMat} Einträge · ${nVid} Videos`;
+}
+
+// ---------- controls
+function setupChips() {
+  const groups = document.getElementById("groups");
+  groups.innerHTML = [["", "Alle"], ...DATA.gruppen.map(g => [g.name, g.name])]
+    .map(([v, l]) => `<button class="chip" data-group="${esc(v)}" aria-pressed="${v === "" }">${esc(l)}</button>`).join("");
+  groups.addEventListener("click", e => {
+    const b = e.target.closest("[data-group]"); if (!b) return;
+    state.group = b.dataset.group;
+    groups.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c === b));
+    render();
+  });
+  const tiers = document.getElementById("tiers");
+  tiers.innerHTML = TIERS.map(([k, l]) => `<button class="chip t" data-tier="${k}" aria-pressed="false">${l.replace(" Game", "")}</button>`).join("");
+  tiers.addEventListener("click", e => {
+    const b = e.target.closest("[data-tier]"); if (!b) return;
+    const k = b.dataset.tier;
+    state.tiers.has(k) ? state.tiers.delete(k) : state.tiers.add(k);
+    b.setAttribute("aria-pressed", state.tiers.has(k));
+    render();
+  });
+  const ver = document.getElementById("ver");
+  ver.insertAdjacentHTML("beforeend", VERSIONS.map(v => `<option value="${v}">läuft in ${v}${v.split(".").length === 2 && v.startsWith("1.") ? ".x" : ""}</option>`).join(""));
+  ver.addEventListener("change", () => { state.ver = ver.value; render(); });
+}
+
+document.getElementById("q").addEventListener("input", e => { state.q = e.target.value.trim(); render(); });
+document.getElementById("hideBuilt").addEventListener("click", e => {
+  state.hideBuilt = !state.hideBuilt; e.currentTarget.setAttribute("aria-pressed", state.hideBuilt); render();
+});
+document.getElementById("toggleAll").addEventListener("click", e => {
+  const all = [...document.querySelectorAll(".mat")];
+  const open = !all.every(d => d.open);
+  all.forEach(d => d.open = open);
+  e.currentTarget.textContent = open ? "Alle zuklappen" : "Alle aufklappen";
+});
+document.getElementById("theme").addEventListener("click", () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+  store.set("theme", root.dataset.theme);
+});
+
+const list = document.getElementById("list");
+list.addEventListener("toggle", e => {
+  const d = e.target; if (!d.matches || !d.matches(".mat") || state.q) return;
+  d.open ? openSet.add(d.dataset.m) : openSet.delete(d.dataset.m);
+  store.set("offen", [...openSet]);
+}, true);
+list.addEventListener("change", e => {
+  const id = e.target.dataset && e.target.dataset.built; if (!id) return;
+  e.target.checked ? built.add(id) : built.delete(id);
+  store.set("gebaut", [...built]);
+  e.target.closest(".vid").classList.toggle("is-built", e.target.checked);
+  const mat = e.target.closest(".mat");
+  const ids = [...mat.querySelectorAll("[data-built]")].map(i => i.dataset.built);
+  const nb = ids.filter(i => built.has(i)).length;
+  mat.querySelector(".built-n").textContent = nb ? `${nb}/${ids.length} gebaut` : "";
+  if (state.hideBuilt) render();
+});
+list.addEventListener("click", e => {
+  const t = e.target.closest(".thumb"); if (!t || t.querySelector("iframe")) return;
+  const id = t.dataset.id;
+  if (!HOSTED) { window.open("https://www.youtube.com/watch?v=" + id, "_blank", "noopener"); return; }
+  t.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0" title="YouTube-Video"
+    allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+});
+
+// ---------- start
+(function init() {
+  const th = store.get("theme", null); if (th) document.documentElement.dataset.theme = th;
+  const n = DATA.gruppen.reduce((s, g) => s + g.eintraege.length, 0);
+  document.getElementById("sub").textContent = `Farmen & Infrastruktur für Minecraft Java · ${n} Einträge · Stand ${DATA.stand} · Ziel ${DATA.zielversion}`;
+  if (!HOSTED) document.getElementById("localhint").textContent = "Lokal geöffnet starten Videos auf YouTube – YouTube erlaubt das Einbetten nur auf Webseiten.";
+  setupChips();
+  render();
+})();
+</script>
+</body>
+</html>
